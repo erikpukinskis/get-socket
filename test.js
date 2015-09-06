@@ -11,7 +11,9 @@ library.test(
 
     orders.subscribe(
       function(message) {
-        expect(message.holdThe).to.equal("mayo")
+        console.log("heyah!")
+
+        expect(message.holdThe).to.have.members(["mayo"])
 
         burgers.publish({
           tastiness: "hardly"
@@ -21,13 +23,13 @@ library.test(
       }
     )
 
-    var orderBurger = orders.publish.defineOnClient().withArgs({holdThe: ["mayo"]})
+    var orderBurger = orders.definePublishOnClient().withArgs({holdThe: ["mayo"]})
 
     var button = element("button", {
       onclick: orderBurger.evalable()
     }, "Burger me bro!")
 
-    burgers.subscribe.defineOnClient(
+    burgers.defineSubscribeOnClient(
       function(burger) {
         document.write("That was a "+burger.tastiness+" tasty burger!")
       }
@@ -37,7 +39,7 @@ library.test(
 
     Server.start(4110)
 
-    return done()
+    // return done()
     var browser = browse("http://localhost:4110", function() {
 
       browser.pressButton("button")

@@ -3,52 +3,79 @@ var library = require("nrtv-library")(require)
 module.exports = library.export(
   "socket",
 
-  [library.collective({echo: undefined}), "sockjs", "nrtv-browser-bridge", "nrtv-server", "http"],
+  [library.collective({socket: undefined}), "sockjs", "nrtv-browser-bridge", "nrtv-server", "http"],
   function(collective, sockjs, BrowserBridge, Server, http) {
 
-    function Socket(identifier) {
-      this.identifier = identifier
 
-      echo().on("connection", function(conn) {
+    /*  Socket Server */
 
-        conn.on("data", function(message) {
-          console.log("client said:", message)
-          conn.write("yo client!")
-        })
+    function SocketServer() {
+      this.socket = sockjs.createServer()
 
+      var subscriptions = this.subscriptions = {}
+
+      var app = Server.express()
+
+      var server = http.createServer(app);
+
+      this.socket.installHandlers(server, {prefix: "/echo"})
+
+      Server.overrideStart(function(port) {
+        server.listen(port)
+      })
+
+      this.socket.on("connection", function(conn) {
+
+        conn.on("data", handleData)
+
+        function handleData(message) {
+          message = JSON.parse(message)
+
+          var callbacks = subscriptions[message.topic] || []
+
+          callbacks.forEach(function(callback) {
+            callback(message.data)
+          })
+
+        }
       })
     }
 
-    var port
+    SocketServer.prototype.subscribe =
+      function(key, callback) {
+        if (!this.subscriptions[key]) {
+          this.subscriptions[key] = []
+        }
 
-    function echo() {
-      if (!collective.echo) {
-
-        collective.echo = sockjs.createServer()
-
-        var app = Server.express()
-
-        var server = http.createServer(app);
-
-        collective.echo.installHandlers(server, {prefix: "/echo"})
-
-        Server.overrideStart(function(assignedPort) {
-          port = assignedPort
-          server.listen(port)
-        })
+        this.subscriptions[key].push(callback)
       }
 
-      return collective.echo
+    function socketServer() {
+      if (!collective.socketServer) {
+        collective.socketServer = new SocketServer()
+      }
+
+      return collective.socketServer
+    }
+
+
+
+    /* Socket */
+
+    function Socket(topic) {
+      this.topic = topic
     }
 
     Socket.prototype.publish = function() {}
 
-    function publishFromBrowser(identifier, port) {
+    function publishFromBrowser(topic, data) {
+
+      data = {topic: topic, data: data}
 
       var socket = new WebSocket("ws://"+window.location.host+"/echo/websocket")
 
       socket.onopen = function (event) {
-        socket.send("Here's some text that the server is urgently awaiting!"); 
+        socket.send(JSON.stringify(data))
       }
 
       socket.onmessage = function (event) {
@@ -56,22 +83,31 @@ module.exports = library.export(
       }
     }
 
-    Socket.prototype.publish.defineOnClient = 
+    Socket.prototype.definePublishOnClient = 
       function() {
-        return BrowserBridge.defineOnClient( publishFromBrowser).withArgs(this.identifier)
+        return BrowserBridge.defineOnClient( publishFromBrowser).withArgs(this.topic)
       }
+
+    function subscribeInBrowser(topic) {
+
+    }
 
     Socket.prototype.subscribe =
-      function() {
-
+      function(callback) {
+        socketServer().subscribe(this.topic, callback)
       }
 
-    function subscribeInBrowser() {}
+    Socket.prototype.defineSubscribeOnClient = function(func) {
+        BrowserBridge.defineOnClient(
+          subscribeInBrowser
+        ).withArgs(this.topic)
+      }
 
-    Socket.prototype.subscribe.defineOnClient = BrowserBridge.defineOnClient.bind(BrowserBridge, subscribeInBrowser)
 
-    return function(identifier) {
-      return new Socket(identifier)
+      BrowserBridge.defineOnClient.bind(BrowserBridge, subscribeInBrowser)
+
+    return function(topic) {
+      return new Socket(topic)
     }
   }
 )
