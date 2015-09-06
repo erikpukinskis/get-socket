@@ -24,7 +24,11 @@ module.exports = library.export(
         server.listen(port)
       })
 
+      var socketServer = this
+
       this.socket.on("connection", function(conn) {
+
+        socketServer.conn = conn
 
         conn.on("data", handleData)
 
@@ -41,13 +45,23 @@ module.exports = library.export(
       })
     }
 
-    SocketServer.prototype.subscribe =
-      function(key, callback) {
-        if (!this.subscriptions[key]) {
-          this.subscriptions[key] = []
+    SocketServer.prototype.publish =
+      function(topic, data) {
+        if (!this.conn) {
+          throw new Error("Tried to publish to socket but it isn't connected yet.")
         }
 
-        this.subscriptions[key].push(callback)
+        this.conn.write(JSON.stringify({topic: topic, data:data}))
+      }
+
+
+    SocketServer.prototype.subscribe =
+      function(topic, callback) {
+        if (!this.subscriptions[topic]) {
+          this.subscriptions[topic] = []
+        }
+
+        this.subscriptions[topic].push(callback)
       }
 
     function socketServer() {
@@ -59,14 +73,17 @@ module.exports = library.export(
     }
 
 
-
     /* Socket */
 
     function Socket(topic) {
       this.topic = topic
+      this.publishQueue = []
     }
 
-    Socket.prototype.publish = function() {}
+    Socket.prototype.publish =
+      function(data) {
+        socketServer().publish(this.topic, data)
+      }
 
     function publishFromBrowser(topic, data) {
 
@@ -77,19 +94,6 @@ module.exports = library.export(
       socket.onopen = function (event) {
         socket.send(JSON.stringify(data))
       }
-
-      socket.onmessage = function (event) {
-        console.log("server said", event.data);
-      }
-    }
-
-    Socket.prototype.definePublishOnClient = 
-      function() {
-        return BrowserBridge.defineOnClient( publishFromBrowser).withArgs(this.topic)
-      }
-
-    function subscribeInBrowser(topic) {
-
     }
 
     Socket.prototype.subscribe =
@@ -97,17 +101,24 @@ module.exports = library.export(
         socketServer().subscribe(this.topic, callback)
       }
 
+    function subscribeInBrowser(topic) {
+
+      socket.onmessage = function (event) {
+        console.log("server said", event.data);
+      }
+
+    }
+
+    Socket.prototype.definePublishOnClient = 
+      function() {
+        return BrowserBridge.defineOnClient( publishFromBrowser).withArgs(this.topic)
+      }
     Socket.prototype.defineSubscribeOnClient = function(func) {
         BrowserBridge.defineOnClient(
           subscribeInBrowser
         ).withArgs(this.topic)
       }
 
-
-      BrowserBridge.defineOnClient.bind(BrowserBridge, subscribeInBrowser)
-
-    return function(topic) {
-      return new Socket(topic)
-    }
+    return Socket
   }
 )

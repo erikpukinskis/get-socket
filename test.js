@@ -4,10 +4,10 @@ library.test(
   "sending a message from the browser",
 
   ["./socket", "nrtv-element", "nrtv-server", "nrtv-browser-bridge", "nrtv-browse"],
-  function(expect, done, socket, element, Server, BrowserBridge, browse) {
+  function(expect, done, Socket, element, Server, BrowserBridge, browse) {
 
-    var orders = socket("burger order")
-    var burgers = socket("burger")
+    var orders = new Socket("burger order")
+    var burgers = new Socket("burger")
 
     orders.subscribe(
       function(message) {
@@ -39,7 +39,7 @@ library.test(
 
     Server.start(4110)
 
-    // return done()
+    return done()
     var browser = browse("http://localhost:4110", function() {
 
       browser.pressButton("button")
