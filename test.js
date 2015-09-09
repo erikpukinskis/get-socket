@@ -42,11 +42,16 @@ library.test(
     return done()
     var browser = browse("http://localhost:4110", function() {
 
+      console.log("browser was", browser)
+
       browser.pressButton("button")
     })
 
+    console.log("way back it is", browser)
+
     function runChecks() {
-      browser.assert.text("body", "a hardly tasty burger")
+      console.log("browser is", browser)
+      // browser.assert.text("body", "a hardly tasty burger")
       Server.stop()
       done()
     }

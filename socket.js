@@ -3,7 +3,7 @@ var library = require("nrtv-library")(require)
 module.exports = library.export(
   "socket",
 
-  [library.collective({socket: undefined}), "sockjs", "nrtv-browser-bridge", "nrtv-server", "http"],
+  [library.collective({}), "sockjs", "nrtv-browser-bridge", "nrtv-server", "http"],
   function(collective, sockjs, BrowserBridge, Server, http) {
 
 
@@ -22,6 +22,7 @@ module.exports = library.export(
 
       Server.overrideStart(function(port) {
         server.listen(port)
+        console.log("listening on "+port+" (for websockets too)")
       })
 
       var socketServer = this
@@ -64,7 +65,7 @@ module.exports = library.export(
         this.subscriptions[topic].push(callback)
       }
 
-    function socketServer() {
+    function getServer() {
       if (!collective.socketServer) {
         collective.socketServer = new SocketServer()
       }
@@ -73,7 +74,89 @@ module.exports = library.export(
     }
 
 
-    /* Socket */
+
+    /* Client functions */
+
+    var getClientSocket = BrowserBridge.defineOnClient(
+      [BrowserBridge.collective({
+        callbacks: []
+      })],
+      function getSocket(collective, callback) {
+
+        if (collective.socket) {
+          return callback(collective.socket)
+        }
+
+        collective.callbacks.push(callback)
+
+        var socket = collective.socket = new WebSocket("ws://"+window.location.host+"/echo/websocket")
+
+        socket.onopen = function () {
+          collective.callbacks.forEach(
+            function(callback) {
+              callback(socket)
+            }
+          )
+        }
+
+      }
+    )
+
+    var publishFromBrowser = BrowserBridge.defineOnClient(
+      [getClientSocket],
+      function publish(getSocket, topic, data) {
+
+        getSocket(function(socket) {
+          socket.send(JSON.stringify({
+            topic:topic,
+            data: data
+          }))
+        })
+      }
+    )
+
+    var subscribeInBrowser = BrowserBridge.defineOnClient(
+        [
+          BrowserBridge.collective({
+            subscriptions: {}
+          }),
+          getClientSocket
+        ],
+
+        function subscribe(collective, getSocket, topic, callback) {
+
+          if (!collective.subscriptions[topic]) {
+            collective.subscriptions[topic] = []
+          }
+
+          collective.subscriptions.push(callback)
+
+          if (!collective.listening) {
+            getSocket(
+              function(socket) {
+                socket.onmessage = handleMessage
+                collective.listening = true
+              }
+            )
+          }
+
+          function handleMessage(message) {
+
+            if (!collective.subscriptions) { return }
+
+            collective.subscriptions[message.topic].forEach(
+              function(callback) {
+                callback(message.data)
+              }
+            )
+          }
+
+        }
+      )
+
+
+
+    /* Interface */
 
     function Socket(topic) {
       this.topic = topic
@@ -82,41 +165,22 @@ module.exports = library.export(
 
     Socket.prototype.publish =
       function(data) {
-        socketServer().publish(this.topic, data)
+        getServer().publish(this.topic, data)
       }
-
-    function publishFromBrowser(topic, data) {
-
-      data = {topic: topic, data: data}
-
-      var socket = new WebSocket("ws://"+window.location.host+"/echo/websocket")
-
-      socket.onopen = function (event) {
-        socket.send(JSON.stringify(data))
-      }
-    }
 
     Socket.prototype.subscribe =
       function(callback) {
-        socketServer().subscribe(this.topic, callback)
+        getServer().subscribe(this.topic, callback)
       }
 
-    function subscribeInBrowser(topic) {
-
-      socket.onmessage = function (event) {
-        console.log("server said", event.data);
-      }
-
-    }
-
-    Socket.prototype.definePublishOnClient = 
+    Socket.prototype.definePublishOnClient =
       function() {
-        return BrowserBridge.defineOnClient( publishFromBrowser).withArgs(this.topic)
+        return publishFromBrowser.withArgs(this.topic)
       }
-    Socket.prototype.defineSubscribeOnClient = function(func) {
-        BrowserBridge.defineOnClient(
-          subscribeInBrowser
-        ).withArgs(this.topic)
+  
+    Socket.prototype.defineSubscribeOnClient =
+      function() {
+        return subscribeInBrowser.withArgs(this.topic)
       }
 
     return Socket
