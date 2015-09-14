@@ -20,10 +20,12 @@ module.exports = library.export(
 
       this.socket.installHandlers(server, {prefix: "/echo"})
 
-      Server.overrideStart(function(port) {
-        server.listen(port)
-        console.log("listening on "+port+" (for websockets too)")
-      })
+      Server.relenquishControl(
+        function start(port) {
+          server.listen(port)
+          console.log("listening on "+port+" (for websockets too)")
+          return server
+        })
 
       var socketServer = this
 
@@ -83,15 +85,20 @@ module.exports = library.export(
       })],
       function getSocket(collective, callback) {
 
-        if (collective.socket) {
+        if (collective.open) {
           return callback(collective.socket)
         }
 
         collective.callbacks.push(callback)
 
+        if (collective.socket) {
+          return
+        }
+
         var socket = collective.socket = new WebSocket("ws://"+window.location.host+"/echo/websocket")
 
         socket.onopen = function () {
+          collective.open = true
           collective.callbacks.forEach(
             function(callback) {
               callback(socket)
@@ -129,7 +136,7 @@ module.exports = library.export(
             collective.subscriptions[topic] = []
           }
 
-          collective.subscriptions.push(callback)
+          collective.subscriptions[topic].push(callback)
 
           if (!collective.listening) {
             getSocket(
@@ -143,6 +150,8 @@ module.exports = library.export(
           function handleMessage(message) {
 
             if (!collective.subscriptions) { return }
+
+            var message = JSON.parse(message.data)
 
             collective.subscriptions[message.topic].forEach(
               function(callback) {
@@ -179,7 +188,7 @@ module.exports = library.export(
       }
   
     Socket.prototype.defineSubscribeOnClient =
-      function() {
+      function(callback) {
         return subscribeInBrowser.withArgs(this.topic)
       }
 

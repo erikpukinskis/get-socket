@@ -11,7 +11,10 @@ library.test(
 
     orders.subscribe(
       function(message) {
-        console.log("heyah!")
+
+        if (message.notes == "finish the test") {
+          return runChecks()
+        }
 
         expect(message.holdThe).to.have.members(["mayo"])
 
@@ -19,39 +22,50 @@ library.test(
           tastiness: "hardly"
         })
 
-        runChecks()
       }
     )
 
-    var orderBurger = orders.definePublishOnClient().withArgs({holdThe: ["mayo"]})
+    var orderBurger = orders.definePublishOnClient()
 
-    var button = element("button", {
-      onclick: orderBurger.evalable()
-    }, "Burger me bro!")
+    var burgerNoMayo = orderBurger.withArgs({holdThe: ["mayo"]}).evalable()
 
-    burgers.defineSubscribeOnClient(
-      function(burger) {
-        document.write("That was a "+burger.tastiness+" tasty burger!")
+    var button = element(
+      "button",
+      {onclick: burgerNoMayo},
+      "Burger me bro!"
+    )
+
+    var subscribe = burgers.defineSubscribeOnClient()
+
+    var tellServerToFinishTest = orderBurger.withArgs({notes: "finish the test"})
+
+    var showTastiness = BrowserBridge.defineOnClient(
+      [tellServerToFinishTest],
+
+      function tasty(finish, burger) {
+
+        document.getElementsByTagName("body")[0].innerHTML = "That was a "+burger.tastiness+" tasty burger!"
+
+        finish()
       }
     )
+
+    BrowserBridge.asap(subscribe.withArgs(showTastiness))
 
     Server.get("/", BrowserBridge.sendPage(button))
 
     Server.start(4110)
 
-    return done()
-    var browser = browse("http://localhost:4110", function() {
+    var browser = browse(
+      "http://localhost:4110",
 
-      console.log("browser was", browser)
-
-      browser.pressButton("button")
-    })
-
-    console.log("way back it is", browser)
+      function(browser) {
+        browser.pressButton("button")
+      }
+    )
 
     function runChecks() {
-      console.log("browser is", browser)
-      // browser.assert.text("body", "a hardly tasty burger")
+      browser.assert.text("body", /a hardly tasty burger/)
       Server.stop()
       done()
     }
