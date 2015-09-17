@@ -1,7 +1,7 @@
 var library = require("nrtv-library")(require)
 
 module.exports = library.export(
-  "socket",
+  "nrtv-socket",
 
   [library.collective({}), "sockjs", "nrtv-browser-bridge", "nrtv-server", "http"],
   function(collective, sockjs, BrowserBridge, Server, http) {
