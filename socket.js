@@ -109,28 +109,29 @@ module.exports = library.export(
     function Socket(topic) {
       this.topic = topic
       this.publishQueue = []
+
+      this.subscribe =
+        function(callback) {
+          getServer().subscribe(topic, callback)
+        }
+
+      this.subscribe.defineInBrowser =
+        function subscribe() {
+          return subscribeInBrowser.withArgs(topic)
+        }
+
+      this.publish =
+        function(data) {
+          getServer().publish(topic, data)
+        }
+
+      this.publish.defineInBrowser =
+        function publish() {
+          return publishFromBrowser.withArgs(topic)
+        }
+
     }
-
-    Socket.prototype.publish =
-      function(data) {
-        getServer().publish(this.topic, data)
-      }
-
-    Socket.prototype.subscribe =
-      function(callback) {
-        getServer().subscribe(this.topic, callback)
-      }
-
-    Socket.prototype.definePublishOnClient =
-      function() {
-        return publishFromBrowser.withArgs(this.topic)
-      }
   
-    Socket.prototype.defineSubscribeOnClient =
-      function(callback) {
-        return subscribeInBrowser.withArgs(this.topic)
-      }
-
     return Socket
   }
 )

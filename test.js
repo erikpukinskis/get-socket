@@ -27,7 +27,7 @@ library.test(
 
     // orders.publish.inBrowser.withArgs() #todo
 
-    var orderBurger = orders.definePublishOnClient()
+    var orderBurger = orders.publish.defineInBrowser()
 
     var burgerNoMayo = orderBurger.withArgs({holdThe: ["mayo"]}).evalable()
 
@@ -37,7 +37,7 @@ library.test(
       "Burger me bro!"
     )
 
-    var subscribe = burgers.defineSubscribeOnClient()
+    var subscribe = burgers.subscribe.defineInBrowser()
 
     var tellServerToFinishTest = orderBurger.withArgs({notes: "finish the test"})
 
