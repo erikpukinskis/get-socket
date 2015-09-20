@@ -4,7 +4,7 @@ library.test(
   "sending a message from the browser",
 
   ["./socket", "nrtv-element", "nrtv-server", "nrtv-browser-bridge", "nrtv-browse"],
-  function(expect, done, Socket, element, Server, BrowserBridge, browse) {
+  function(expect, done, Socket, element, server, bridge, browse) {
 
     var orders = new Socket("burger order")
     var burgers = new Socket("burger")
@@ -41,7 +41,7 @@ library.test(
 
     var tellServerToFinishTest = orderBurger.withArgs({notes: "finish the test"})
 
-    var showTastiness = BrowserBridge.defineOnClient(
+    var showTastiness = bridge.defineOnClient(
       [tellServerToFinishTest],
 
       function tasty(finish, burger) {
@@ -52,11 +52,11 @@ library.test(
       }
     )
 
-    BrowserBridge.asap(subscribe.withArgs(showTastiness))
+    bridge.asap(subscribe.withArgs(showTastiness))
 
-    Server.get("/", BrowserBridge.sendPage(button))
+    server.get("/", bridge.sendPage(button))
 
-    Server.start(4110)
+    server.start(4110)
 
     var browser = browse(
       "http://localhost:4110",
@@ -68,7 +68,7 @@ library.test(
 
     function runChecks() {
       browser.assert.text("body", /a hardly tasty burger/)
-      Server.stop()
+      server.stop()
       done()
     }
 

@@ -4,7 +4,7 @@ module.exports = library.export(
   "nrtv-socket",
 
   [library.collective({}), "./socket-server", "nrtv-browser-bridge"],
-  function(collective, SocketServer, BrowserBridge) {
+  function(collective, SocketServer, bridge) {
 
     function getServer() {
       if (!collective.socketServer) {
@@ -18,8 +18,8 @@ module.exports = library.export(
 
     /* Client functions */
 
-    var getClientSocket = BrowserBridge.defineOnClient(
-      [BrowserBridge.collective({
+    var getClientSocket = bridge.defineOnClient(
+      [bridge.collective({
         callbacks: []
       })],
       function getSocket(collective, callback) {
@@ -48,7 +48,7 @@ module.exports = library.export(
       }
     )
 
-    var publishFromBrowser = BrowserBridge.defineOnClient(
+    var publishFromBrowser = bridge.defineOnClient(
       [getClientSocket],
       function publish(getSocket, topic, data) {
 
@@ -61,9 +61,9 @@ module.exports = library.export(
       }
     )
 
-    var subscribeInBrowser = BrowserBridge.defineOnClient(
+    var subscribeInBrowser = bridge.defineOnClient(
         [
-          BrowserBridge.collective({
+          bridge.collective({
             subscriptions: {}
           }),
           getClientSocket
