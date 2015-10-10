@@ -9,13 +9,14 @@
   },
   "dependencies": {
     "nrtv-library": "*",
-    "nrtv-browser-bridge": "*",
+    "nrtv-browser-bridge": "0.34.0", // Because we need bridge collectives. This requirement goes away when we start using library-bridge
     "sockjs": "*"
   },
   "scripts": {
     "test": "node --harmony test.js"
   },
   "devDependencies": {
+    "nrtv-test": "*",
     "nrtv-server": "*",
     "nrtv-element": "*",
     "nrtv-browse": "*"

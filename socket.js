@@ -3,22 +3,12 @@ var library = require("nrtv-library")(require)
 module.exports = library.export(
   "nrtv-socket",
 
-  [library.collective({}), "./socket-server", "nrtv-browser-bridge"],
-  function(collective, SocketServer, bridge) {
-
-    function getServer() {
-      if (!collective.socketServer) {
-        collective.socketServer = new SocketServer()
-      }
-
-      return collective.socketServer
-    }
-
-
+  [library.collective({subscriptions: {}}), "./socket-server", "nrtv-browser-bridge"],
+  function(collective, server, bridge) {
 
     /* Client functions */
 
-    var getClientSocket = bridge.defineOnClient(
+    var getClientSocket = bridge.defineFunction(
       [bridge.collective({
         callbacks: []
       })],
@@ -48,20 +38,20 @@ module.exports = library.export(
       }
     )
 
-    var publishFromBrowser = bridge.defineOnClient(
+    var publishFromBrowser = bridge.defineFunction(
       [getClientSocket],
       function publish(getSocket, topic, data) {
 
         getSocket(function(socket) {
           socket.send(JSON.stringify({
-            topic:topic,
+            __topic: topic,
             data: data
           }))
         })
       }
     )
 
-    var subscribeInBrowser = bridge.defineOnClient(
+    var subscribeInBrowser = bridge.defineFunction(
         [
           bridge.collective({
             subscriptions: {}
@@ -86,13 +76,15 @@ module.exports = library.export(
             )
           }
 
+          // for this to work, we need the middlewares on the client side too. Hm.
+
           function handleMessage(message) {
 
             if (!collective.subscriptions) { return }
 
             var message = JSON.parse(message.data)
 
-            collective.subscriptions[message.topic].forEach(
+            collective.subscriptions[message.__topic].forEach(
               function(callback) {
                 callback(message.data)
               }
@@ -106,13 +98,19 @@ module.exports = library.export(
 
     /* Interface */
 
+    var subscriptions = collective.subscriptions
+
     function Socket(topic) {
       this.topic = topic
       this.publishQueue = []
 
       this.subscribe =
         function(callback) {
-          getServer().subscribe(topic, callback)
+          if (!subscriptions[topic]) {
+            subscriptions[topic] = []
+          }
+
+          subscriptions[topic].push(callback)
         }
 
       this.subscribe.defineInBrowser =
@@ -122,7 +120,10 @@ module.exports = library.export(
 
       this.publish =
         function(data) {
-          getServer().publish(topic, data)
+          server.publish({
+            __topic: topic,
+            data: data
+          })
         }
 
       this.publish.defineInBrowser =
@@ -131,7 +132,24 @@ module.exports = library.export(
         }
 
     }
-  
+
+    server.use(
+      function(message, next) {
+
+        if (!message.__topic) {
+          return next()
+        }
+
+        var callbacks = subscriptions[message.__topic] || []
+
+        callbacks.forEach(function(callback) {
+          callback(message.data)
+        })
+
+        next()
+      }
+    )
+
     return Socket
   }
 )

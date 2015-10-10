@@ -2,13 +2,13 @@ var library = require("nrtv-library")(require)
 
 module.exports = library.export(
   "socket-server",
-  ["sockjs", "nrtv-server", "http"],
-  function(sockjs, nrtvServer, http) {
+  [library.collective({}), "sockjs", "nrtv-server", "http"],
+  function(collective, sockjs, nrtvServer, http) {
 
     function SocketServer() {
       this.socket = sockjs.createServer()
 
-      var subscriptions = this.subscriptions = {}
+      var middlewares = this.middlewares = []
 
       var app = nrtvServer.express()
 
@@ -32,36 +32,47 @@ module.exports = library.export(
         conn.on("data", handleData)
 
         function handleData(message) {
+
           message = JSON.parse(message)
+          var i = 0
+          handleOneMore(message)
 
-          var callbacks = subscriptions[message.topic] || []
-
-          callbacks.forEach(function(callback) {
-            callback(message.data)
-          })
-
+          function handleOneMore(message) {
+            var middleware = middlewares[i++]
+            if (middleware) {
+              middleware(message, handleOneMore)
+            }
+          }
         }
+
       })
     }
 
-    SocketServer.prototype.publish =
-      function(topic, data) {
-        if (!this.conn) {
-          throw new Error("Tried to publish to socket but it isn't connected yet.")
-        }
-
-        this.conn.write(JSON.stringify({topic: topic, data:data}))
+  SocketServer.prototype.publish =
+    function(object) {
+      if (!this.conn) {
+        throw new Error("Tried to publish to socket but it isn't connected yet.")
       }
 
+      this.conn.write(JSON.stringify(object))
+    }
 
-    SocketServer.prototype.subscribe =
-      function(topic, callback) {
-        if (!this.subscriptions[topic]) {
-          this.subscriptions[topic] = []
+    SocketServer.prototype.use =
+      function(middleware) {
+        if (typeof middleware != "function") {
+          throw new Error("Tried to provide a middleware with socketServer.use, but "+JSON.stringify(middleware)+" is not a function.")
         }
-
-        this.subscriptions[topic].push(callback)
+        this.middlewares.push(middleware)
       }
+
+    library.collectivize(
+      SocketServer,
+      collective,
+      function() {
+        return new SocketServer()
+      },
+      ["use", "publish"]
+    )
 
     return SocketServer
   }  

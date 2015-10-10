@@ -1,6 +1,6 @@
-var library = require("nrtv-library")(require)
+var test = require("nrtv-test")(require)
 
-library.test(
+test.using(
   "sending a message from the browser",
 
   ["./socket", "nrtv-element", "nrtv-server", "nrtv-browser-bridge", "nrtv-browse"],
@@ -27,6 +27,8 @@ library.test(
 
     // orders.publish.inBrowser.withArgs() #todo
 
+
+
     var orderBurger = orders.publish.defineInBrowser()
 
     var burgerNoMayo = orderBurger.withArgs({holdThe: ["mayo"]}).evalable()
@@ -41,7 +43,7 @@ library.test(
 
     var tellServerToFinishTest = orderBurger.withArgs({notes: "finish the test"})
 
-    var showTastiness = bridge.defineOnClient(
+    var showTastiness = bridge.defineFunction(
       [tellServerToFinishTest],
 
       function tasty(finish, burger) {
