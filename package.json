@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "nrtv-library": "*",
-    "nrtv-browser-bridge": "0.34.0", // Because we need bridge collectives. This requirement goes away when we start using library-bridge
+    "nrtv-socket-server": "*",
+    "nrtv-browser-bridge": "0.34.0",
     "sockjs": "*"
   },
   "scripts": {

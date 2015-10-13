@@ -3,7 +3,7 @@ var library = require("nrtv-library")(require)
 module.exports = library.export(
   "nrtv-socket",
 
-  [library.collective({subscriptions: {}}), "./socket-server", "nrtv-browser-bridge"],
+  [library.collective({subscriptions: {}}), "nrtv-socket-server", "nrtv-browser-bridge"],
   function(collective, server, bridge) {
 
     /* Client functions */
