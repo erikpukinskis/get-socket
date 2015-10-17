@@ -1,155 +1,53 @@
 var library = require("nrtv-library")(require)
 
+
+
+
 module.exports = library.export(
   "nrtv-socket",
+  ["nrtv-browser-bridge"],
+  function(bridge) {
 
-  [library.collective({subscriptions: {}}), "nrtv-socket-server", "nrtv-browser-bridge"],
-  function(collective, server, bridge) {
+    function getSocket(collective, callback, queryString) {
 
-    /* Client functions */
+      var url = "ws://"+window.location.host+"/echo/websocket"+(queryString || "")
 
-    var getClientSocket = bridge.defineFunction(
-      [bridge.collective({
-        callbacks: []
-      })],
-      function getSocket(collective, callback) {
-
-        if (collective.open) {
-          return callback(collective.socket)
-        }
-
-        collective.callbacks.push(callback)
-
-        if (collective.socket) {
-          return
-        }
-
-        var socket = collective.socket = new WebSocket("ws://"+window.location.host+"/echo/websocket")
-
-        socket.onopen = function () {
-          collective.open = true
-          collective.callbacks.forEach(
-            function(callback) {
-              callback(socket)
-            }
-          )
-        }
-
+      if (!collective[url]) {
+        collective[url] = {callbacks: []}
       }
-    )
+      collective = collective[url]
 
-    var publishFromBrowser = bridge.defineFunction(
-      [getClientSocket],
-      function publish(getSocket, topic, data) {
-
-        getSocket(function(socket) {
-          socket.send(JSON.stringify({
-            __topic: topic,
-            data: data
-          }))
-        })
+      if (collective.open) {
+        return callback(collective.socket)
       }
-    )
 
-    var subscribeInBrowser = bridge.defineFunction(
-        [
-          bridge.collective({
-            subscriptions: {}
-          }),
-          getClientSocket
-        ],
+      collective.callbacks.push(callback)
 
-        function subscribe(collective, getSocket, topic, callback) {
+      if (collective.socket) {
+        return
+      }
 
-          if (!collective.subscriptions[topic]) {
-            collective.subscriptions[topic] = []
+      var socket = collective.socket = new WebSocket(url)
+
+      socket.onopen = function () {
+        collective.open = true
+        collective.callbacks.forEach(
+          function(callback) {
+            callback(socket)
           }
-
-          collective.subscriptions[topic].push(callback)
-
-          if (!collective.listening) {
-            getSocket(
-              function(socket) {
-                socket.onmessage = handleMessage
-                collective.listening = true
-              }
-            )
-          }
-
-          // for this to work, we need the middlewares on the client side too. Hm.
-
-          function handleMessage(message) {
-
-            if (!collective.subscriptions) { return }
-
-            var message = JSON.parse(message.data)
-
-            collective.subscriptions[message.__topic].forEach(
-              function(callback) {
-                callback(message.data)
-              }
-            )
-          }
-
-        }
-      )
-
-
-
-    /* Interface */
-
-    var subscriptions = collective.subscriptions
-
-    function Socket(topic) {
-      this.topic = topic
-      this.publishQueue = []
-
-      this.subscribe =
-        function(callback) {
-          if (!subscriptions[topic]) {
-            subscriptions[topic] = []
-          }
-
-          subscriptions[topic].push(callback)
-        }
-
-      this.subscribe.defineInBrowser =
-        function subscribe() {
-          return subscribeInBrowser.withArgs(topic)
-        }
-
-      this.publish =
-        function(data) {
-          server.publish({
-            __topic: topic,
-            data: data
-          })
-        }
-
-      this.publish.defineInBrowser =
-        function publish() {
-          return publishFromBrowser.withArgs(topic)
-        }
+        )
+      }
 
     }
 
-    server.use(
-      function(message, next) {
-
-        if (!message.__topic) {
-          return next()
-        }
-
-        var callbacks = subscriptions[message.__topic] || []
-
-        callbacks.forEach(function(callback) {
-          callback(message.data)
-        })
-
-        next()
+    return {
+      defineGetInBrowser: function () {
+        return bridge.defineFunction(
+          [bridge.collective({})],
+          getSocket
+        )
       }
-    )
+    }
 
-    return Socket
   }
 )
