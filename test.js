@@ -7,7 +7,7 @@ test.using(
   function(expect, done, socket, socketServer, element, server, bridge, browse) {
 
 
-    socketServer.adoptConnections(
+    socketServer.use(
       function(connection) {
         connection.on("data", haveExpectations)
       }
@@ -24,16 +24,27 @@ test.using(
 
     bridge.asap(send)
 
-    server.get("/", bridge.sendPage())
+    server.addRoute("get", "/", bridge.sendPage())
 
     server.start(1104)
 
-    browse("http://localhost:1104")
+    var cleanUp
+    var gotMessage = false
+
+    browse("http://localhost:1104", function(browser) {
+        cleanUp = function() {
+          browser.done()
+          server.stop()
+          done()
+        }
+        if (gotMessage) { cleanUp() }
+      }
+    )
 
     function haveExpectations(message) {
       expect(message).to.equal("you'll never be yourself again")
-      done()
-      server.stop()
+      if (cleanUp) { cleanUp }
+      else { gotMessage = true }
     }
   }
 )
