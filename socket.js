@@ -10,7 +10,21 @@ module.exports = library.export(
 
     function getSocket(collective, callback, queryString) {
 
-      var url = "ws://"+window.location.host+"/echo/websocket"+(queryString || "")
+      var match = document.cookie.match(/nrtvMinionId=([a-z0-9]*)/)
+
+      var minionId = match && match[1]
+      var isOutside = !!document.isOutsideNrtvMinionIframe
+
+      if (minionId && !isOutside) {
+        var addendum = "__nrtvMinionId="+minionId
+        if (queryString) {
+          queryString += "&"+addendum
+        } else {
+          queryString = "?"+addendum
+        }
+      }
+
+      var url = "ws://"+window.location.host+"/echo/websocket"+(queryString)
 
       if (!collective[url]) {
         collective[url] = {callbacks: []}
