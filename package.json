@@ -1,6 +1,6 @@
 {
   "name": "nrtv-socket",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "A persistant connection for sending messages back and forth between a server and a browser",
   "main": "socket.js",
   "repository": {
