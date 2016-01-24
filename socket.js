@@ -56,8 +56,8 @@ module.exports = library.export(
 
     return {
       defineGetInBrowser: function (theirBridge) {
-        return bridge.defineFunction(
-          [(theirBridge || bridge).collective({})],
+        return (theirBridge || bridge).defineFunction(
+          [bridge.collective({})],
           getSocket
         )
       }
