@@ -10,7 +10,7 @@
   "dependencies": {
     "nrtv-library": "*",
     "nrtv-socket-server": "*",
-    "nrtv-browser-bridge": "0.34.0",
+    "nrtv-browser-bridge": "*",
     "sockjs": "*"
   },
   "scripts": {
