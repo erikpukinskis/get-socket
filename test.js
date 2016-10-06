@@ -3,8 +3,8 @@ var test = require("nrtv-test")(require)
 test.using(
   "provides a websocket interface in the browser",
 
-  ["./socket", "nrtv-socket-server", "nrtv-element", "nrtv-server", "nrtv-browser-bridge", "nrtv-browse",],
-  function(expect, done, socket, socketServer, element, server, bridge, browse) {
+  ["./socket", "nrtv-socket-server", "web-element", "nrtv-server", "browser-bridge", "nrtv-browse",],
+  function(expect, done, socket, socketServer, element, server, BrowserBridge, browse) {
 
 
     socketServer.use(
@@ -13,8 +13,9 @@ test.using(
       }
     )
 
+    var bridge = new BrowserBridge()
     var send = bridge.defineFunction(
-      [socket.defineGetInBrowser()],
+      [socket.defineOn(bridge)],
       function pontificate(getSocket) {
         getSocket(function(socket) {
           socket.send("you'll never be yourself again")

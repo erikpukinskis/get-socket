@@ -5,7 +5,7 @@ var library = require("nrtv-library")(require)
 
 module.exports = library.export(
   "nrtv-socket",
-  ["nrtv-browser-bridge"],
+  ["browser-bridge"],
   function(bridge) {
 
     function getSocket(collective, callback, queryString) {
@@ -55,8 +55,8 @@ module.exports = library.export(
     }
 
     return {
-      defineGetInBrowser: function (theirBridge) {
-        return (theirBridge || bridge).defineFunction(
+      defineOn: function (bridge) {
+        return bridge.defineFunction(
           [bridge.collective({})],
           getSocket
         )

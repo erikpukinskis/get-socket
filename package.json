@@ -10,7 +10,7 @@
   "dependencies": {
     "nrtv-library": "*",
     "nrtv-socket-server": "*",
-    "nrtv-browser-bridge": "*",
+    "browser-bridge": "*",
     "sockjs": "*"
   },
   "scripts": {
@@ -19,7 +19,7 @@
   "devDependencies": {
     "nrtv-test": "*",
     "nrtv-server": "*",
-    "nrtv-element": "*",
+    "web-element": "*",
     "nrtv-browse": "*"
   },
   "license": "ISC",
