@@ -15,7 +15,7 @@ test.using(
 
     var bridge = new BrowserBridge()
     var send = bridge.defineFunction(
-      [socket.defineOn(bridge)],
+      [socket.defineGetOn(bridge)],
       function pontificate(getSocket) {
         getSocket(function(socket) {
           socket.send("you'll never be yourself again")

@@ -55,7 +55,7 @@ module.exports = library.export(
     }
 
     return {
-      defineOn: function (bridge) {
+      defineGetOn: function (bridge) {
         return bridge.defineFunction(
           [bridge.collective({})],
           getSocket
