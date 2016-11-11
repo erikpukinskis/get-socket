@@ -1,12 +1,9 @@
 var library = require("nrtv-library")(require)
 
-
-
-
 module.exports = library.export(
   "get-socket",
-  ["browser-bridge", "ws", "http"],
-  function(bridge, ws, http) {
+  ["ws", "http"],
+  function(ws, http) {
 
 
     function Socket(connection) {

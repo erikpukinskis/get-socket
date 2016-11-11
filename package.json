@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "nrtv-library": "*",
-    "browser-bridge": "*",
     "ws": "*"
   },
   "scripts": {
@@ -17,6 +16,7 @@
   },
   "devDependencies": {
     "nrtv-test": "*",
+    "browser-bridge": "*",
     "nrtv-server": "*",
     "web-element": "*",
     "nrtv-browse": "*",
