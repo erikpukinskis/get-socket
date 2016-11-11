@@ -9,7 +9,26 @@ module.exports = library.export(
   function(bridge, ws, nrtvServer, http) {
 
 
+    function Socket(connection) {
+      this.connection = connection
+      this.url = connection.upgradeReq.url
+    }
+
+    Socket.prototype.listen = function(callback) {
+      this.connection.on("message", callback)
+    }
+
+    Socket.prototype.send = function(message) {
+      throw new Error("impl")
+    }
+
+    Socket.prototype.onClose = function(callback) {
+      throw new Error("impl")
+    }
+
+
     function SocketServer(server) {
+
       if (!server) {
         server = nrtvServer
       }
@@ -17,11 +36,12 @@ module.exports = library.export(
       var socketServer = server.__nrtvSocketServer
 
       if (socketServer) {
-        throw new Error("The server already has a socket server associated with it. Do you want to do SocketServer.onServer(yourServer) instead? You can call that as many times as you want.")
+        throw new Error("The server already has a socket server associated with it.")
       }
 
       this.adopters = []
-      this._takeOver(server)
+
+      takeOver(server, this.adopters)
     }
 
     SocketServer.prototype.use =
@@ -29,47 +49,46 @@ module.exports = library.export(
         this.adopters.push(handler)
       }
 
-    SocketServer.prototype._takeOver =
-      function(server) {
-        server.__nrtvSocketServer = this
+    function takeOver(server, adopters) {
+      server.__nrtvSocketServer = this
 
-        var app = server.express()
+      var app = server.express()
 
-        var httpServer = http.createServer(app);
+      var httpServer = http.createServer(app);
 
-        var wsServer = new ws.Server({server: httpServer})
+      var wsServer = new ws.Server({server: httpServer})
 
-        this.adopters.push(function(conn) {
-          throw new Error("unadopted conn!")
-        })
+      adopters.push(function(socket) {
+        throw new Error("unadopted connection!")
+      })
 
-        server.relenquishControl(
-          function start(port) {
-            httpServer.listen(port)
-            return httpServer
-          })
-
-        wsServer.on("connection", this._handleNewConnection.bind(this))
-      }
-
-    SocketServer.prototype._handleNewConnection =
-      function(connection) {
-        var adopters = this.adopters
-
-        var location = console.log("URLLLLLLLLL", connection.upgradeReq.url)
-
-        var i = adopters.length - 1
-
-        tryAnother()
-
-        function tryAnother() {
-          var adopter = adopters[i--]
-
-          if (adopter) {
-            adopter(connection, tryAnother)
-          }
+      server.relenquishControl(
+        function start(port) {
+          httpServer.listen(port)
+          return httpServer
         }
+      )
+
+
+      function adopt(connection) {
+        var socket = new Socket(connection)
+
+        tryAnAdopter(adopters, adopters.length - 1, socket)
       }
+
+      wsServer.on("connection", adopt)
+    }
+
+    function tryAnAdopter(adopters, index, socket) {
+
+      var adopter = adopters[index]
+
+      if (!adopter) { return }
+
+      var tryAgain = tryAnAdopter.bind(null, adopters, index - 1, socket)
+
+      adopter(socket, tryAgain)
+    }
 
     function handleConnections(server, handler) {
       var socketServer = server.__nrtvSocketServer

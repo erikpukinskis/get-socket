@@ -1,6 +1,5 @@
 var test = require("nrtv-test")(require)
 
-
 test.using(
   "server receives data",
   ["./", "ws", "nrtv-server", "querystring"],
@@ -11,13 +10,13 @@ test.using(
     var socketServer =
       getSocket.handleConnections(
         server,
-        function(connection, next) {
-          var params = querystring.parse(connection.upgradeReq.url.split("?")[1])
+        function(socket, next) {
+          var params = querystring.parse(socket.url.split("?")[1])
 
           var wantIt = params.__nrtvSingleUseSocketIdentifier == "102dk102ke2"
 
           if (wantIt) {
-            connection.on("message", expectSingle)
+            socket.listen(expectSingle)
           } else {
             next()
           }
@@ -59,8 +58,8 @@ test.using(
 
     getSocket.handleConnections(
       server,
-      function(connection) {
-        connection.on("message", haveExpectations)
+      function(socket) {
+        socket.listen(haveExpectations)
       }
     )
 
