@@ -56,10 +56,17 @@ module.exports = library.export(
 
     return {
       defineGetOn: function (bridge) {
-        return bridge.defineFunction(
+        var binding = bridge.__getSocketBinding
+        if (binding) {
+          return binding
+        }
+
+        binding = bridge.__getSocketBinding = bridge.defineFunction(
           [bridge.collective({})],
           getSocket
         )
+
+        return binding
       }
     }
 
