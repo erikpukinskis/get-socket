@@ -5,8 +5,8 @@ var library = require("nrtv-library")(require)
 
 module.exports = library.export(
   "get-socket",
-  ["browser-bridge", "ws", "nrtv-server", "http"],
-  function(bridge, ws, nrtvServer, http) {
+  ["browser-bridge", "ws", "http"],
+  function(bridge, ws, http) {
 
 
     function Socket(connection) {
@@ -37,11 +37,7 @@ module.exports = library.export(
 
     function SocketServer(server) {
 
-      if (!server) {
-        server = nrtvServer
-      }
-
-      var socketServer = server.__nrtvSocketServer
+      var socketServer = server.__socketServer
 
       if (socketServer) {
         throw new Error("The server already has a socket server associated with it.")
@@ -58,7 +54,7 @@ module.exports = library.export(
       }
 
     function takeOver(server, adopters) {
-      server.__nrtvSocketServer = this
+      server.__socketServer = this
 
       var app = server.express()
 
@@ -99,10 +95,10 @@ module.exports = library.export(
     }
 
     function handleConnections(server, handler) {
-      var socketServer = server.__nrtvSocketServer
+      var socketServer = server.__socketServer
 
       if (!socketServer) {
-        socketServer = server.__nrtvSocketServer = new SocketServer(server)
+        socketServer = server.__socketServer = new SocketServer(server)
       }
 
       socketServer.use(handler)
@@ -114,7 +110,7 @@ module.exports = library.export(
         return binding
       }
 
-      binding = bridge.__getSocketBinding = bridge.defineFunction([bridge.collective({})],getSocketInBrowser)
+      binding = bridge.__getSocketBinding = bridge.defineFunction([bridge.collective({})], getSocketInBrowser)
 
       return binding
     }
