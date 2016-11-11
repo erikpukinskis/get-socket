@@ -1,11 +1,6 @@
 var test = require("nrtv-test")(require)
 
 
-
-
-var test = require("nrtv-test")(require)
-var library = test.library
-
 test.using(
   "server receives data",
   ["./", "ws", "nrtv-server", "querystring"],

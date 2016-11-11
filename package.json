@@ -1,11 +1,11 @@
 {
-  "name": "nrtv-socket",
+  "name": "get-socket",
   "version": "0.12.0",
   "description": "A persistant connection for sending messages back and forth between a server and a browser",
-  "main": "socket.js",
+  "main": "get-socket.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/erikpukinskis/nrtv-socket.git"
+    "url": "https://github.com/erikpukinskis/get-socket.git"
   },
   "dependencies": {
     "nrtv-library": "*",
@@ -22,5 +22,5 @@
     "nrtv-browse": "*"
   },
   "license": "ISC",
-  "homepage": "https://github.com/erikpukinskis/nrtv-browse"
+  "homepage": "https://github.com/erikpukinskis/get-socket"
 }
