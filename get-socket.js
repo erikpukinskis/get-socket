@@ -12,18 +12,26 @@ module.exports = library.export(
     function Socket(connection) {
       this.connection = connection
       this.url = connection.upgradeReq.url
+      this.connection.on("message", handleMessage.bind(this))
+    }
+
+    function handleMessage(message) {
+      if (!this.listener) {
+        throw new Error("no listener!")
+      }
+      this.listener(message)
     }
 
     Socket.prototype.listen = function(callback) {
-      this.connection.on("message", callback)
+      this.listener = callback
     }
 
     Socket.prototype.send = function(message) {
-      throw new Error("impl")
+      setTimeout(this.connection.send.bind(this.connection, message))
     }
 
     Socket.prototype.onClose = function(callback) {
-      throw new Error("impl")
+      this.connection.on("close", callback)
     }
 
 

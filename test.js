@@ -1,5 +1,6 @@
 var test = require("nrtv-test")(require)
 
+
 test.using(
   "server receives data",
   ["./", "ws", "nrtv-server", "querystring"],
@@ -7,33 +8,28 @@ test.using(
 
     var server = new Server()
 
-    var socketServer =
-      getSocket.handleConnections(
-        server,
-        function(socket, next) {
-          var params = querystring.parse(socket.url.split("?")[1])
+    getSocket.handleConnections(
+      server,
+      function(socket, next) {
+        var params = querystring.parse(socket.url.split("?")[1])
 
-          var wantIt = params.__nrtvSingleUseSocketIdentifier == "102dk102ke2"
+        var wantIt = params.__nrtvSingleUseSocketIdentifier == "102dk102ke2"
 
-          if (wantIt) {
-            socket.listen(expectSingle)
-          } else {
-            next()
-          }
+        if (wantIt) {
+          socket.listen(expectSingle)
+        } else {
+          next()
         }
-      )
+      }
+    )
 
     server.start(8000)
 
-    function sendMessage(message) {
-      var ws = new WebSocket('ws://localhost:8000/echo/websocket?__nrtvSingleUseSocketIdentifier=102dk102ke2')
+    var ws = new WebSocket('ws://localhost:8000/echo/websocket?__nrtvSingleUseSocketIdentifier=102dk102ke2')
 
-      ws.on("open", function() {
-        ws.send(message)
-      })
-    }
-
-    sendMessage("barf")
+    ws.on("open", function() {
+      ws.send("barf")
+    })
 
     function expectSingle(data) {
       expect(data).to.equal("barf")
@@ -45,6 +41,76 @@ test.using(
 )
 
 
+
+
+test.using(
+  "server sends data",
+  ["./", "ws", "nrtv-server"],
+  function(expect, done, getSocket, WebSocket, Server) {
+
+    var server = new Server()
+
+    getSocket.handleConnections(
+      server,
+      function(socket) {
+        socket.send("i love you")
+      }
+    )
+
+    server.start(8001)
+
+    var ws = new WebSocket('ws://localhost:8001/echo/websocket')
+
+    ws.on("open", function() {
+      console.log("test opened")
+    })
+
+    ws.on("message", function(data) {
+      expect(data).to.equal("i love you")
+      server.stop()
+      done()
+    })
+
+  }
+)
+
+
+
+
+test.using(
+  "detecting socket close",
+  ["./", "ws", "nrtv-server", "sinon"],
+  function(expect, done, getSocket, WebSocket, Server, sinon) {
+
+    var server = new Server()
+
+    var record = sinon.spy()
+
+    getSocket.handleConnections(
+      server,
+      function(socket) {
+        socket.listen(record)
+        socket.onClose(close)
+      }
+    )
+
+    server.start(8002)
+
+    var ws = new WebSocket('ws://localhost:8002/echo/websocket')
+
+    ws.on("open", function() {
+      ws.send("hi")
+      ws.close()
+    })
+
+    function close() {
+      expect(record).to.have.been.called
+      server.stop()
+      done()
+    }
+
+  }
+)
 
 
 
@@ -78,26 +144,36 @@ test.using(
 
     server.addRoute("get", "/", bridge.sendPage())
 
-    server.start(1104)
+    server.start(8003)
 
     var cleanUp
     var gotMessage = false
 
-    browse("http://localhost:1104", function(browser) {
-
+    var browser = browse(
+      "http://localhost:8003",
+      function(browser) {
+        console.log("NOW BROWSER")
         cleanUp = function() {
           browser.done()
           server.stop()
           done()
         }
-        if (gotMessage) { cleanUp() }
+
+        if (gotMessage) {
+          cleanUp()
+        }
       }
     )
 
     function haveExpectations(message) {
       expect(message).to.equal("you'll never be yourself again")
-      if (cleanUp) { cleanUp }
-      else { gotMessage = true }
+      if (cleanUp) {
+        console.log("ALREADY CLEANING!")
+        cleanUp()
+      } else {
+        console.log("WAITING FOR BROWSER TO BE THERE")
+        gotMessage = true
+      }
     }
   }
 )

@@ -19,7 +19,8 @@
     "nrtv-test": "*",
     "nrtv-server": "*",
     "web-element": "*",
-    "nrtv-browse": "*"
+    "nrtv-browse": "*",
+    "sinon": "*"
   },
   "license": "ISC",
   "homepage": "https://github.com/erikpukinskis/get-socket"
