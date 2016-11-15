@@ -5,36 +5,48 @@ module.exports = library.export(
   ["ws", "http"],
   function(WebSocket, http) {
 
+    function generateSocketConstructor() {
 
-    function Socket(connection) {
-      this.connection = connection
-      this.url = connection.url || connection.upgradeReq.url
-      this.connection.on("message", handleMessage.bind(this))
-    }
-
-    function handleMessage(message) {
-      if (!this.listener) {
-        throw new Error("no listener!")
+      function Socket(connection) {
+        this.connection = connection
+        this.url = connection.url || connection.upgradeReq.url
+        if (this.connection.on) {
+          this.connection.on("message", handleMessage.bind(this))
+        } else {
+          this.connection.onmessage = handleMessage.bind(this)
+        }
       }
-      this.listener(message)
+
+      function handleMessage(message) {
+        if (!this.listener) {
+          throw new Error("no listener!")
+        }
+        if (typeof message == "object") {
+          message = message.data
+        }
+        this.listener(message)
+      }
+
+      Socket.prototype.listen = function(callback) {
+        this.listener = callback
+      }
+
+      Socket.prototype.send = function(message) {
+        setTimeout(this.connection.send.bind(this.connection, message))
+      }
+
+      Socket.prototype.onClose = function(callback) {
+        this.connection.on("close", callback)
+      }
+
+      Socket.prototype.close = function() {
+        this.connection.close()
+      }
+
+      return Socket
     }
 
-    Socket.prototype.listen = function(callback) {
-      this.listener = callback
-    }
-
-    Socket.prototype.send = function(message) {
-      setTimeout(this.connection.send.bind(this.connection, message))
-    }
-
-    Socket.prototype.onClose = function(callback) {
-      this.connection.on("close", callback)
-    }
-
-    Socket.prototype.close = function() {
-      this.connection.close()
-    }
-
+    var Socket = generateSocketConstructor()
 
     function SocketServer(server) {
 
@@ -115,12 +127,12 @@ module.exports = library.export(
         return binding
       }
 
-      binding = bridge.__getSocketBinding = bridge.defineFunction([bridge.collective({})], getSocketInBrowser)
+      binding = bridge.__getSocketBinding = bridge.defineFunction([bridge.collective({}), bridge.defineSingleton("Socket", generateSocketConstructor)], getSocketInBrowser)
 
       return binding
     }
 
-    function getSocketInBrowser(collective, callback, queryString) {
+    function getSocketInBrowser(collective, Socket, callback, queryString) {
 
       var match = document.cookie.match(/nrtvMinionId=([a-z0-9]*)/)
 
@@ -153,12 +165,13 @@ module.exports = library.export(
         return
       }
 
-      var socket = collective.socket = new WebSocket(url)
+      var connection = collective.socket = new WebSocket(url)
 
-      socket.onopen = function () {
+      connection.onopen = function () {
         collective.open = true
         collective.callbacks.forEach(
           function(callback) {
+            var socket = new Socket(connection)
             callback(socket)
           }
         )
