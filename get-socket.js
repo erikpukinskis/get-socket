@@ -3,12 +3,12 @@ var library = require("nrtv-library")(require)
 module.exports = library.export(
   "get-socket",
   ["ws", "http"],
-  function(ws, http) {
+  function(WebSocket, http) {
 
 
     function Socket(connection) {
       this.connection = connection
-      this.url = connection.upgradeReq.url
+      this.url = connection.url || connection.upgradeReq.url
       this.connection.on("message", handleMessage.bind(this))
     }
 
@@ -53,22 +53,26 @@ module.exports = library.export(
     function takeOver(server, adopters) {
       server.__socketServer = this
 
-      var app = server.express()
+      if (server.express) {
+        var app = server.express()
 
-      var httpServer = http.createServer(app);
+        var httpServer = http.createServer(app)
 
-      var wsServer = new ws.Server({server: httpServer})
+        server.relenquishControl(
+          function start(port) {
+            httpServer.listen(port)
+            return httpServer
+          }
+        )
+      } else if (server.listen) {
+        httpServer = server
+      }
+
+      var wsServer = new WebSocket.Server({server: httpServer})
 
       adopters.push(function(socket) {
         throw new Error("unadopted connection!")
       })
-
-      server.relenquishControl(
-        function start(port) {
-          httpServer.listen(port)
-          return httpServer
-        }
-      )
 
 
       function adopt(connection) {
@@ -91,7 +95,7 @@ module.exports = library.export(
       adopter(socket, tryAgain)
     }
 
-    function handleConnections(server, handler) {
+    function handleIncomingConnections(server, handler) {
       var socketServer = server.__socketServer
 
       if (!socketServer) {
@@ -101,7 +105,7 @@ module.exports = library.export(
       socketServer.use(handler)
     }
 
-    function defineOnBridge(bridge) {
+    function defineGetSocketOnBridge(bridge) {
       var binding = bridge.__getSocketBinding
       if (binding) {
         return binding
@@ -158,10 +162,21 @@ module.exports = library.export(
 
     }
 
-    return {
-      defineOn: defineOnBridge,
-      handleConnections: handleConnections
+    function getSocket(url, handler) {
+      var ws = new WebSocket(url)
+      ws.url = url
+
+      ws.on("open", onOpen.bind(null, handler, ws)) 
     }
 
+    function onOpen(handler, ws) {
+      var socket = new Socket(ws)
+      handler(socket)
+    }
+
+    getSocket.defineOn = defineGetSocketOnBridge
+    getSocket.handleConnections = handleIncomingConnections
+
+    return getSocket
   }
 )

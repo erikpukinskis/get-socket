@@ -1,7 +1,7 @@
 {
   "name": "get-socket",
   "version": "0.16.0",
-  "description": "A persistant connection for sending messages back and forth between a server and a browser",
+  "description": "A persistant connection for sending messages back and forth between a server and a browser or another server",
   "main": "get-socket.js",
   "repository": {
     "type": "git",
@@ -16,11 +16,11 @@
   },
   "devDependencies": {
     "nrtv-test": "*",
-    "browser-bridge": "*",
     "nrtv-server": "*",
     "web-element": "*",
     "nrtv-browse": "*",
-    "sinon": "*"
+    "sinon": "*",
+    "browser-bridge": "*"
   },
   "license": "ISC",
   "homepage": "https://github.com/erikpukinskis/get-socket"
