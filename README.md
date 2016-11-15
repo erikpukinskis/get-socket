@@ -4,64 +4,69 @@ GetSocket provides a consistent interface you can use everywhere.
 
 Set up a server to listen for socket connections:
 
-  var http = require("http")
-  var getSocket = require("get-socket")
-  var server = http.createServer()
+    var http = require("http")
+    var getSocket = require("get-socket")
+    var server = http.createServer()
 
-  getSocket.handleConnections(
-    server,
-    function(socket, next) {
-      socket.listen(function(message) {
-        console.log(message)
-      })
-    }
-  )
-
-  server.start(8080)
-
-Then use getSocket to send a message:
-
-  var socket = getSocket("http://localhost:8080")
-  socket.send("hello, server!")
-
-Or listen for messages from the server:
-
-  getSocket.handleConnections(
-    server,
-    function(socket, next) {
-      socket.send("hello, client!")
-    }
-  )
-
-  socket.listen(function(message) {
-    console.log(message)
-  })
-
-Or use browser-bridge to do the same from the browser:
-
-  var http = require("http")
-  var getSocket = require("get-socket")
-  var BrowserBridge = require("browser-bridge")
-
-  var server = http.createServer(function(request, response) {
-    var bridge = new BrowserBridge()
-
-    var listen = bridge.defineFunction(
-      [getSocket.defineOn(bridge)],
-      function(getSocket) {
-        getSocket(function(socket) {
-          socket.send("greetings from the browser!")
-
-          socket.listen(console.log)
+    getSocket.handleConnections(
+      server,
+      function(socket, next) {
+        socket.listen(function(message) {
+          console.log(message)
         })
       }
     )
 
-    bridge.asap(listen)
+    server.start(4040)
 
-    response.writeHead(200)
-    res.end(bridge.toHtml())
-  })
+Then use getSocket to send a message:
+
+    getSocket("ws://localhost:4040",
+      function(socket) {
+        socket.send("hello, server!")
+      }
+    )
+
+Or listen for messages from the server:
+
+    getSocket.handleConnections(
+      server,
+      function(socket, next) {
+        socket.listen(function(message) {
+          console.log(message)
+        })
+
+        socket.send("hello, client!")
+      }
+    )
+
+Or use browser-bridge to do the same from the browser:
+
+    var http = require("http")
+    var getSocket = require("get-socket")
+    var BrowserBridge = require("browser-bridge")
+
+    var server = http.createServer(sendPage)
+
+    function sendPage(request, response) {
+      var bridge = new BrowserBridge()
+
+      var listen = bridge.defineFunction(
+        [getSocket.defineOn(bridge)],
+        function(getSocket) {
+          getSocket(function(socket) {
+            socket.send("greetings from the browser!")
+
+            socket.listen(console.log)
+          })
+        }
+      )
+
+      bridge.asap(listen)
+
+      response.writeHead(200)
+      response.end(bridge.toHtml())
+    }
 
 Check out [demo.js](demo.js) for the complete example.
 
