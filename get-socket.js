@@ -31,6 +31,10 @@ module.exports = library.export(
       this.connection.on("close", callback)
     }
 
+    Socket.prototype.close = function() {
+      this.connection.close()
+    }
+
 
     function SocketServer(server) {
 
