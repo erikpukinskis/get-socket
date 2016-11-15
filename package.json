@@ -1,6 +1,6 @@
 {
   "name": "get-socket",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "A persistant connection for sending messages back and forth between a server and a browser or another server",
   "main": "get-socket.js",
   "repository": {
