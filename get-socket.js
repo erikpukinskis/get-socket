@@ -179,6 +179,7 @@ module.exports = library.export(
     }
 
     getSocket.defineOn = defineGetSocketOnBridge
+
     getSocket.handleConnections = handleIncomingConnections
 
     return getSocket

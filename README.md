@@ -4,69 +4,77 @@ GetSocket provides a consistent interface you can use everywhere.
 
 Set up a server to listen for socket connections:
 
-    var http = require("http")
-    var getSocket = require("get-socket")
-    var server = http.createServer()
+```javascript
+var http = require("http")
+var getSocket = require("get-socket")
+var server = http.createServer()
 
-    getSocket.handleConnections(
-      server,
-      function(socket, next) {
-        socket.listen(function(message) {
-          console.log(message)
-        })
-      }
-    )
+getSocket.handleConnections(
+  server,
+  function(socket, next) {
+    socket.listen(function(message) {
+      console.log(message)
+    })
+  }
+)
 
-    server.start(4040)
+server.start(4040)
+```
 
 Then use getSocket to send a message:
 
-    getSocket("ws://localhost:4040",
-      function(socket) {
-        socket.send("hello, server!")
-      }
-    )
+```javascript
+getSocket("ws://localhost:4040",
+  function(socket) {
+    socket.send("hello, server!")
+  }
+)
+```
 
 Or listen for messages from the server:
 
-    getSocket.handleConnections(
-      server,
-      function(socket, next) {
-        socket.listen(function(message) {
-          console.log(message)
-        })
+```javascript
+getSocket.handleConnections(
+  server,
+  function(socket, next) {
+    socket.listen(function(message) {
+      console.log(message)
+    })
 
-        socket.send("hello, client!")
-      }
-    )
+    socket.send("hello, client!")
+  }
+)
+```
 
 Or use browser-bridge to do the same from the browser:
 
-    var http = require("http")
-    var getSocket = require("get-socket")
-    var BrowserBridge = require("browser-bridge")
+```javascript
+var http = require("http")
+var getSocket = require("get-socket")
+var BrowserBridge = require("browser-bridge")
 
-    var server = http.createServer(sendPage)
+var server = http.createServer(sendPage)
 
-    function sendPage(request, response) {
-      var bridge = new BrowserBridge()
+function sendPage(request, response) {
+  var bridge = new BrowserBridge()
 
-      var listen = bridge.defineFunction(
-        [getSocket.defineOn(bridge)],
-        function(getSocket) {
-          getSocket(function(socket) {
-            socket.send("greetings from the browser!")
+  var listen = bridge.defineFunction(
+    [getSocket.defineOn(bridge)],
+    function(getSocket) {
+      getSocket(function(socket) {
+        socket.send("greetings from the browser!")
 
-            socket.listen(console.log)
-          })
-        }
-      )
-
-      bridge.asap(listen)
-
-      response.writeHead(200)
-      response.end(bridge.toHtml())
+        socket.listen(console.log)
+      })
     }
+  )
+
+  bridge.asap(listen)
+
+  response.writeHead(200)
+  response.end(bridge.toHtml())
+}
+```
 
 Check out [demo.js](demo.js) for the complete example.
 
