@@ -9,10 +9,10 @@
   },
   "dependencies": {
     "nrtv-library": "*",
-    "ws": "*"
+    "ws": "~1"
   },
   "scripts": {
-    "test": "node --harmony test.js"
+    "test": "node test.js"
   },
   "devDependencies": {
     "nrtv-test": "*",

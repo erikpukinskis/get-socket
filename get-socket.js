@@ -111,7 +111,7 @@ module.exports = library.export(
       adopter(socket, tryAgain)
     }
 
-    function handleIncomingConnections(server, handler) {
+    function handleConnections(server, handler) {
       var socketServer = server.__socketServer
 
       if (!socketServer) {
@@ -193,7 +193,7 @@ module.exports = library.export(
 
     getSocket.defineOn = defineGetSocketOnBridge
 
-    getSocket.handleConnections = handleIncomingConnections
+    getSocket.handleConnections = handleConnections
 
     return getSocket
   }
