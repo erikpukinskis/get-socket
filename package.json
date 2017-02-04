@@ -1,7 +1,7 @@
 {
   "name": "get-socket",
   "version": "0.20.0",
-  "description": "A persistant connection for sending messages back and forth between a server and a browser or another server",
+  "description": "Use WebSockets exactly the same way in Node and in the browser",
   "main": "get-socket.js",
   "repository": {
     "type": "git",

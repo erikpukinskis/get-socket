@@ -1,6 +1,6 @@
 The interfaces for using WebSockets can vary a lot between Node libraries, socket servers, and the browser. It can be tricky getting both ends to talk to each other.
 
-GetSocket provides a consistent interface you can use everywhere.
+**Get-socket** provides a consistent interface you can use everywhere.
 
 Set up a server to listen for socket connections:
 
