@@ -78,6 +78,6 @@ function sendPage(request, response) {
 
 Check out [demo.js](demo.js) for the complete example.
 
-!! Also recommended
+## Also recommended
 
 GetSocket lets you set up generic connection handlers for all incoming connections, but if you want to set up different listeners for different clients in advance, consider [single-use-socket](https://www.npmjs.com/package/single-use-socket).
