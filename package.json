@@ -8,19 +8,19 @@
     "url": "https://github.com/erikpukinskis/get-socket.git"
   },
   "dependencies": {
-    "nrtv-library": "*",
-    "ws": "~1"
+    "module-library": "^0.80.0",
+    "ws": "^1.1.5"
   },
   "scripts": {
     "test": "node test.js"
   },
   "devDependencies": {
-    "nrtv-test": "*",
-    "nrtv-server": "*",
+    "browser-bridge": "*",
+    "browser-task": "*",
+    "run-test": "^0.51.0",
+    "sinon": "^5.0.0",
     "web-element": "*",
-    "nrtv-browse": "*",
-    "sinon": "*",
-    "browser-bridge": "*"
+    "web-site": "*"
   },
   "license": "ISC",
   "homepage": "https://github.com/erikpukinskis/get-socket"

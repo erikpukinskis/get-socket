@@ -1,9 +1,8 @@
-var test = require("nrtv-test")(require)
+var runTest = require("run-test")(require)
 
-
-test.using(
+runTest(
   "server receives data",
-  ["./", "ws", "nrtv-server", "querystring"],
+  ["./", "ws", "web-site", "querystring"],
   function(expect, done, getSocket, WebSocket, Server, querystring) {
 
     var server = new Server()
@@ -43,9 +42,9 @@ test.using(
 
 
 
-test.using(
+runTest(
   "server sends data",
-  ["./", "ws", "nrtv-server"],
+  ["./", "ws", "web-site"],
   function(expect, done, getSocket, WebSocket, Server) {
 
     var server = new Server()
@@ -61,10 +60,6 @@ test.using(
 
     var ws = new WebSocket('ws://localhost:8001/echo/websocket')
 
-    ws.on("open", function() {
-      console.log("test opened")
-    })
-
     ws.on("message", function(data) {
       expect(data).to.equal("i love you")
       server.stop()
@@ -77,9 +72,9 @@ test.using(
 
 
 
-test.using(
+runTest(
   "detecting socket close",
-  ["./", "ws", "nrtv-server", "sinon"],
+  ["./", "ws", "web-site", "sinon"],
   function(expect, done, getSocket, WebSocket, Server, sinon) {
 
     var server = new Server()
@@ -104,7 +99,7 @@ test.using(
     })
 
     function close() {
-      expect(record).to.have.been.called
+      record.should.have.been.called
       server.stop()
       done()
     }
@@ -114,12 +109,13 @@ test.using(
 
 
 
-test.using(
+runTest(
   "sending in the browser",
 
-  ["./", "web-element", "nrtv-server", "browser-bridge", "nrtv-browse",],
-  function(expect, done, getSocket, element, Server, BrowserBridge, browse) {
+  ["./", "web-element", "web-site", "browser-bridge", "browser-task",],
+  function(expect, done, getSocket, element, Server, BrowserBridge, browserTask) {
 
+    done.failAfter(1000000000)
     var server = new Server()
 
     getSocket.handleConnections(
@@ -142,17 +138,16 @@ test.using(
 
     bridge.asap(send)
 
-    server.addRoute("get", "/", bridge.sendPage())
+    server.addRoute("get", "/", bridge.requestHandler())
 
     server.start(8003)
 
     var cleanUp
     var gotMessage = false
 
-    var browser = browse(
+    browserTask(
       "http://localhost:8003",
       function(browser) {
-        console.log("NOW BROWSER")
         cleanUp = function() {
           browser.done()
           server.stop()
@@ -168,10 +163,8 @@ test.using(
     function haveExpectations(message) {
       expect(message).to.equal("you'll never be yourself again")
       if (cleanUp) {
-        console.log("ALREADY CLEANING!")
         cleanUp()
       } else {
-        console.log("WAITING FOR BROWSER TO BE THERE")
         gotMessage = true
       }
     }
