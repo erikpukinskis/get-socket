@@ -127,12 +127,17 @@ module.exports = library.export(
         return binding
       }
 
-      binding = bridge.__getSocketBinding = bridge.defineFunction([bridge.collective({}), bridge.defineSingleton("Socket", generateSocketConstructor)], getSocketInBrowser)
+      var socketAudiences = bridge.defineSingleton(
+        "socketAudiences",
+        function() {
+          return {}})
+
+      binding = bridge.__getSocketBinding = bridge.defineFunction([socketAudiences, bridge.defineSingleton("Socket", generateSocketConstructor)], getSocketInBrowser)
 
       return binding
     }
 
-    function getSocketInBrowser(collective, Socket, callback, queryString) {
+    function getSocketInBrowser(socketAudiences, Socket, callback, queryString) {
 
       var match = document.cookie.match(/nrtvMinionId=([a-z0-9]*)/)
 
@@ -150,26 +155,27 @@ module.exports = library.export(
 
       var url = "ws://"+window.location.host+"/echo/websocket"+(queryString)
 
-      if (!collective[url]) {
-        collective[url] = {callbacks: []}
+      if (!socketAudiences[url]) {
+        socketAudiences[url] = {callbacks: [],
+          open: false}
       }
-      collective = collective[url]
+      audience = socketAudiences[url]
 
-      if (collective.open) {
-        return callback(collective.socket)
+      if (audience.open) {
+        return callback(audience.socket)
       }
 
-      collective.callbacks.push(callback)
+      audience.callbacks.push(callback)
 
-      if (collective.socket) {
+      if (audience.socket) {
         return
       }
 
-      var connection = collective.socket = new WebSocket(url)
+      var connection = audience.socket = new WebSocket(url)
 
       connection.onopen = function () {
-        collective.open = true
-        collective.callbacks.forEach(
+        audience.open = true
+        audience.callbacks.forEach(
           function(callback) {
             var socket = new Socket(connection)
             callback(socket)
