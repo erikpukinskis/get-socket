@@ -36,7 +36,11 @@ module.exports = library.export(
       }
 
       Socket.prototype.onClose = function(callback) {
-        this.connection.on("close", callback)
+        if (this.connection.on) {
+          this.connection.on("close", callback)
+        } else {
+          this.connection.onclose(callback)
+        }
       }
 
       Socket.prototype.close = function() {
