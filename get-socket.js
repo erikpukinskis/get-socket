@@ -39,7 +39,7 @@ module.exports = library.export(
         if (this.connection.on) {
           this.connection.on("close", callback)
         } else {
-          this.connection.onclose(callback)
+          this.connection.onclose = callback
         }
       }
 
