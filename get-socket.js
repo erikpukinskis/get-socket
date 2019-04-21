@@ -79,7 +79,7 @@ module.exports = library.export(
         var httpServer = http.createServer(app)
 
         server.relenquishControl(
-          function start(port) {
+          function startHttpServerWithSockets(port) {
             httpServer.listen(port)
             return httpServer
           }
