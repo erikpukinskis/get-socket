@@ -19,7 +19,8 @@ module.exports = library.export(
 
       function handleMessage(message) {
         if (!this.listener) {
-          throw new Error("no listener!")
+          this.connection.send("socket hung up")
+          return
         }
         if (typeof message == "object") {
           message = message.data
@@ -79,7 +80,7 @@ module.exports = library.export(
         var httpServer = http.createServer(app)
 
         server.relenquishControl(
-          function startHttpServerWithSockets(port) {
+          function start(port) {
             httpServer.listen(port)
             return httpServer
           }
@@ -193,7 +194,7 @@ module.exports = library.export(
       var ws = new WebSocket(url)
       ws.url = url
 
-      ws.on("open", onOpen.bind(null, handler, ws)) 
+      ws.on("open", onOpen.bind(null, handler, ws))
     }
 
     function onOpen(handler, ws) {
