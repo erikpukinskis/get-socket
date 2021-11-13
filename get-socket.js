@@ -33,6 +33,9 @@ module.exports = library.export(
       }
 
       Socket.prototype.send = function(message) {
+        if (typeof message === 'object') {
+          message = JSON.stringify(message, null, 4)}
+
         setTimeout(this.connection.send.bind(this.connection, message))
       }
 

@@ -70,6 +70,34 @@ runTest(
 )
 
 
+runTest(
+  "sending an object as JSON",
+  ["./", "ws", "web-site"],
+  function(expect, done, getSocket, WebSocket, Server) {
+
+    var server = new Server()
+
+    getSocket.handleConnections(
+      server,
+      function(socket) {
+        socket.send({ message: "i love you"})
+      }
+    )
+
+    server.start(8001)
+
+    var ws = new WebSocket('ws://localhost:8001/echo/websocket')
+
+    ws.on("message", function(data) {
+      expect(JSON.parse(data).message).to.equal("i love you")
+      server.stop()
+      done()
+    })
+
+  }
+)
+
+
 
 
 runTest(
